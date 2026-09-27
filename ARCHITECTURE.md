@@ -2,7 +2,8 @@
 
 ## Purpose
 
-MEF connects stable Builder capability intent to concrete local execution stacks while preserving Builder as structural authority.
+MEF connects stable Builder capability intent to concrete local execution stacks while preserving
+Builder as structural authority.
 
 ## Authority map
 
@@ -15,141 +16,125 @@ Superior MI Builder R1
         ▼
 Model Execution Fabric
   EnvironmentSnapshot  immutable observation evidence
-  Provider Adapter     runtime-specific translation/execution
-  Qualification Record measured compatibility evidence
-  Deployment Planner   derived selection proposal
+  Provider Adapters    runtime-specific qualification/execution
+  Deployment Planner   deterministic evidence/policy proposal
         │
         ▼
 External runtimes
   llama.cpp / AIR / later stacks
 ```
 
-MEF must never become a second graph or registry.
-
-## Wave 1 data flow
-
-```text
-read-only host observation
-  ├── OS / architecture
-  ├── logical CPU count
-  ├── Linux memory total when available
-  ├── NVIDIA metadata via read-only nvidia-smi query when available
-  ├── executable presence in PATH
-  ├── configured endpoint candidates
-  └── configured model-root existence
-              │
-              ▼
-       EnvironmentSnapshot
-              │
-              ├── canonical sorted representation
-              └── SHA-256 content identity
-```
-
-No network request and no model invocation occurs in Wave 1.
+MEF must never become a second graph, registry, scheduler, model server, or capability authority.
 
 ## Stable capability identity
 
-MEF reuses Builder's `CapabilityRef`. The initial R0 capability is:
+MEF reuses Builder's `CapabilityRef`. R0 qualifies:
 
 ```text
 text.generate@1.0.0
 ```
 
-MEF does not define a separate capability namespace.
+The semantic capability does not encode llama.cpp, AIR, CUDA, GGUF, endpoint, or model-path details.
+
+## Observation authority
+
+`EnvironmentSnapshot` is deterministic read-only evidence. It may describe observed hardware,
+runtime candidates, and model roots, but it is not System IR and cannot mutate Builder state.
 
 ## Provider boundary
 
-A provider is a concrete implementation of a capability for a runtime/model/environment combination. The model is not the provider. llama.cpp is not the model. AIR is not System IR.
-
-Future provider identity therefore includes at least:
+Provider adapters independently qualify a concrete runtime/model/environment combination for a stable
+capability and retain provider-specific evidence.
 
 ```text
-adapter implementation
-runtime endpoint/process
-model artifact identity
-observed environment
+smi-mef-core
+  ProviderQualification
+  TextGenerateRequest
+  TextGenerateResponse
+  TextGenerationReceipt
+        ▲
+   ┌────┴────┐
+   │         │
+smi-mef-llamacpp   smi-mef-air
 ```
 
-Exact qualification semantics arrive in Waves 2–5.
+Provider-local model identity remains provider-local in R0. Cross-provider model artifact equivalence
+is not fabricated from names or paths.
 
-## Dependency direction
+## Deployment planning
+
+`smi-mef-plan` consumes current environment evidence plus independently validated provider
+qualifications under an explicit `DeploymentPolicy`.
+
+```text
+EnvironmentSnapshot
+      +
+ProviderQualification[]
+      +
+explicit provider policy
+      +
+Builder-owned realization target
+      │
+      ▼
+DeploymentPlan
+      ├── selected qualification identity
+      ├── provider / endpoint / model evidence
+      └── ordinary Builder GraphDelta proposal
+```
+
+The planner is stateless. It does not apply `GraphDelta`, mutate `SystemGraph`, or register semantic
+definitions. Missing, stale, capability-incompatible, or ambiguous evidence is a structured failure.
+Candidate iteration order cannot decide the plan.
+
+## Planned execution
+
+`execute-plan` is not a second planner. It follows an already explicit plan, revalidates the exact
+provider-specific qualification selected by that plan, and delegates to the existing provider adapter.
+
+```text
+DeploymentPlan + exact qualification + TextGenerateRequest
+        │
+        ├── provider.llamacpp.http -> existing llama.cpp adapter
+        └── provider.air.http      -> existing AIR adapter
+```
+
+No fallback occurs inside execution. A mismatched qualification is rejected.
+
+## Builder realization
+
+The planner proposes only ordinary Builder binding mutations:
+
+```text
+unbound -> BindCapability
+bound A -> UnbindCapability(A) + BindCapability(B)
+bound B -> no structural mutation required
+```
+
+Every mutation proposal is bound to an exact `GraphRevision`. Builder remains responsible for
+application, validation, and commit. The R0 test suite applies a planner-generated substitution delta
+through Builder's own `GraphDelta::apply` path to prove this boundary is real.
+
+## R0 dependency direction
 
 ```text
 smi-ir (Builder R1)
    ↑
 smi-mef-core
-   ↑
-smi-mef-observe
-   ↑
-smi-mef-cli
+   ├── smi-mef-observe
+   ├── smi-mef-llamacpp
+   ├── smi-mef-air
+   └── smi-mef-plan
+            ↑
+       smi-mef-cli
 ```
 
-No MEF crate is imported by Builder R1.
+Builder imports no MEF crate.
 
+## R0 endpoint
 
-## Wave 2 provider flow
+The release claim is **Qualified Provider Substitution**:
 
-```text
-EnvironmentSnapshot SHA-256
-        │
-configured llama.cpp endpoint
-        │
-        ├── GET /health
-        └── GET /v1/models
-                 │
-                 ▼
-       ProviderQualification
-                 │
-                 ▼
-       POST /v1/completions
-                 │
-                 ▼
-       TextGenerationReceipt
-```
-
-`ProviderQualification` is evidence, not a provider registry. The `llama.cpp` adapter
-may translate requests and retain provider-specific JSON, but it cannot create or mutate
-Builder `SystemGraph`, `DefinitionRegistry`, or `GraphDelta`.
-
-The qualification is bound to a specific `EnvironmentSnapshot` identity. A later planner
-may use that evidence, but qualification itself does not choose among providers.
-
-## Wave 3 second-provider flow
-
-```text
-EnvironmentSnapshot SHA-256
-        │
-configured AIR endpoint
-        │
-        ├── GET /health
-        ├── GET /v1/models
-        ├── GET /model
-        ├── GET /runtime
-        └── POST /v1/completions probe
-                 │
-                 ▼
-       ProviderQualification
-                 │
-                 ▼
-       POST /v1/completions
-                 │
-                 ▼
-       TextGenerationReceipt
-```
-
-AIR-specific model/runtime evidence remains inside `smi-mef-air`. The shared core contract
-continues to describe capability qualification and execution evidence without importing AIR
-scheduler, backend, or model-format semantics.
-
-## R0 dependency direction after Wave 3
-
-```text
-smi-ir (Builder R1)
-   ↑
-smi-mef-core
-   ├──→ smi-mef-observe
-   ├──→ smi-mef-llamacpp
-   └──→ smi-mef-air
-                ↑
-          smi-mef-cli
-```
+> The same high-level `text.generate@1.0.0` intent executes through two independently qualified real
+> provider stacks while only explicit deployment realization changes. Selection is evidence- and
+> policy-bound, Builder remains structural authority, and missing compatibility fails rather than
+> generating hidden integration glue.

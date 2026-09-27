@@ -2,7 +2,7 @@
 
 **Provider-independent local model execution built on Superior MI Builder R1.**
 
-Status: **R0 Wave 3 candidate**
+Status: **R0 endpoint candidate**
 Builder dependency: immutable `builder-r1` commit `82a5ed814a42dc9ca4e8c1540227f18d4f97e11e`
 Rust toolchain: `1.98.1`
 

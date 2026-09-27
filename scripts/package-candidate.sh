@@ -19,7 +19,9 @@ mkdir -p "$STAGE"
 rsync -a \
   --exclude='.git/' \
   --exclude='target/' \
+  --exclude='local/' \
   --exclude='failure-evidence/' \
+  --exclude='Superior-MI-MEF-*.zip' \
   "$ROOT/" "$STAGE/"
 
 mkdir -p "$(dirname "$OUTPUT")"

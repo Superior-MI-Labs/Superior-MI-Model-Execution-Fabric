@@ -13,19 +13,34 @@ Read in this order:
 - Superior MI Builder R1 owns canonical System IR and `GraphDelta`. Do not recreate either here.
 - `DefinitionRegistry` remains the semantic/module definition authority. Do not create a second capability registry.
 - `EnvironmentSnapshot` is read-only evidence for planning, never structural truth.
-- Provider adapters execute capabilities. They do not own graph structure.
+- Provider adapters execute capabilities. They do not own graph structure or provider-selection policy.
 - Model artifacts and provider runtimes are separate identities.
 - Multiple compatible providers must not be resolved by arbitrary iteration order.
-- Planning must produce an explicit decision/evidence trail and later propose ordinary Builder mutations.
+- R0 planning requires explicit provider policy and current qualification evidence.
+- `DeploymentPlan` is a proposal. It never commits Builder state.
+- `execute-plan` follows a plan; it must never perform fallback selection.
 - Missing compatibility is a structured failure, not generated glue.
 - No normal feature work belongs in Wave 5; that wave attacks the R0 claim.
 
+## Frozen R0 surfaces
+
+After Wave 3 qualification, do not modify these during the Wave 4/5 endpoint push unless new evidence
+falsifies them:
+
+- `smi-mef-core`
+- `smi-mef-llamacpp`
+- `smi-mef-air`
+- `text.generate@1.0.0`
+
 ## Change discipline
 
-For bugs: reproduce from exact evidence, identify the violated invariant, fix the canonical owner, add a regression test, run the narrow test, then run `./scripts/verify.sh`.
+For bugs: reproduce from exact evidence, identify the violated invariant, fix the canonical owner, add a
+regression test, run the narrow test, then run `./scripts/verify.sh`.
 
-Do not silence Clippy to move a gate. Do not change toolchain or edition to make a symptom disappear. Do not add parallel pipelines or hidden mutable truth.
+Do not silence Clippy to move a gate. Do not change toolchain or edition to make a symptom disappear.
+Do not add parallel pipelines, hidden mutable truth, implicit fallback, or another registry.
 
 ## Qualification discipline
 
-Delivered candidates must pass `./scripts/verify.sh` unchanged on the pinned Rust toolchain. Do not run `cargo fmt` before qualification; formatting drift is an artifact defect. Rust-free static checks are an early filter only.
+Delivered candidates must pass `./scripts/verify.sh` on the pinned Rust toolchain. Final R0 qualification
+is `./scripts/qualify-r0.sh`; final evidence packaging is `./scripts/collect-r0-evidence.sh`.

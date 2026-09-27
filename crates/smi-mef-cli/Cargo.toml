@@ -5,9 +5,11 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+smi-ir.workspace = true
 smi-mef-air = { path = "../smi-mef-air" }
 smi-mef-core = { path = "../smi-mef-core" }
 smi-mef-observe = { path = "../smi-mef-observe" }
+smi-mef-plan = { path = "../smi-mef-plan" }
 smi-mef-llamacpp = { path = "../smi-mef-llamacpp" }
 serde_json.workspace = true
 

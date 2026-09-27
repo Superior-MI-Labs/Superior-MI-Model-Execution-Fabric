@@ -576,10 +576,12 @@ name = "smi-mef-cli"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "smi-ir",
  "smi-mef-air",
  "smi-mef-core",
  "smi-mef-llamacpp",
  "smi-mef-observe",
+ "smi-mef-plan",
 ]
 
 [[package]]
@@ -606,6 +608,16 @@ dependencies = [
 name = "smi-mef-observe"
 version = "0.1.0"
 dependencies = [
+ "smi-ir",
+ "smi-mef-core",
+]
+
+[[package]]
+name = "smi-mef-plan"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
  "smi-ir",
  "smi-mef-core",
 ]
