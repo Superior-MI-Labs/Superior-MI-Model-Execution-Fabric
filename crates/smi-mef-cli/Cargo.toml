@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+smi-mef-air = { path = "../smi-mef-air" }
 smi-mef-core = { path = "../smi-mef-core" }
 smi-mef-observe = { path = "../smi-mef-observe" }
 smi-mef-llamacpp = { path = "../smi-mef-llamacpp" }

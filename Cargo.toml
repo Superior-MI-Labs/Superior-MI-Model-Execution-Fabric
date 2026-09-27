@@ -3,6 +3,7 @@ members = [
     "crates/smi-mef-core",
     "crates/smi-mef-observe",
     "crates/smi-mef-llamacpp",
+    "crates/smi-mef-air",
     "crates/smi-mef-cli",
 ]
 resolver = "2"

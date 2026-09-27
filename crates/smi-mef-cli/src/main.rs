@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
+use smi_mef_air::{AirClient, AirQualification};
 use smi_mef_core::{EnvironmentSnapshot, TextGenerateRequest, SNAPSHOT_SCHEMA_VERSION};
 use smi_mef_llamacpp::{LlamaCppClient, LlamaCppQualification};
 use smi_mef_observe::{observe_environment, ObservationConfig};
@@ -29,6 +30,8 @@ fn run(arguments: impl Iterator<Item = String>) -> Result<(), String> {
         "snapshot" => run_snapshot(&arguments[1..]),
         "llama-qualify" => run_llama_qualify(&arguments[1..]),
         "llama-generate" => run_llama_generate(&arguments[1..]),
+        "air-qualify" => run_air_qualify(&arguments[1..]),
+        "air-generate" => run_air_generate(&arguments[1..]),
         _ => Err(format!("unknown command '{command}'\n{}", usage())),
     }
 }
@@ -187,6 +190,113 @@ fn run_llama_generate(arguments: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+fn run_air_qualify(arguments: &[String]) -> Result<(), String> {
+    let mut endpoint = None;
+    let mut requested_model = None;
+    let mut environment = None;
+    let mut output = None;
+    let mut timeout_seconds = DEFAULT_TIMEOUT_SECONDS;
+    let mut index = 0;
+    while index < arguments.len() {
+        let flag = &arguments[index];
+        let value = option_value(arguments, index, flag)?;
+        match flag.as_str() {
+            "--endpoint" => endpoint = Some(value.to_owned()),
+            "--model" => requested_model = Some(value.to_owned()),
+            "--environment" => environment = Some(PathBuf::from(value)),
+            "--output" => output = Some(PathBuf::from(value)),
+            "--timeout-seconds" => timeout_seconds = parse_positive_u64(value, flag)?,
+            _ => return Err(format!("unknown air-qualify option '{flag}'\n{}", usage())),
+        }
+        index += 2;
+    }
+
+    let endpoint = endpoint.ok_or_else(|| "air-qualify requires --endpoint".to_owned())?;
+    let environment = environment.ok_or_else(|| "air-qualify requires --environment".to_owned())?;
+    let output = output.ok_or_else(|| "air-qualify requires --output".to_owned())?;
+    let snapshot = read_environment_snapshot(&environment)?;
+    ensure_air_endpoint_was_observed(&snapshot, &endpoint)?;
+    let environment_sha256 = snapshot
+        .identity()
+        .map_err(|error| format!("cannot identify environment snapshot: {error}"))?;
+    let client = AirClient::new(&endpoint, Duration::from_secs(timeout_seconds))
+        .map_err(|error| error.to_string())?;
+    let qualification = client
+        .qualify(requested_model.as_deref(), environment_sha256)
+        .map_err(|error| error.to_string())?;
+    let bytes = qualification
+        .to_canonical_bytes()
+        .map_err(|error| format!("cannot serialize AIR qualification: {error}"))?;
+    write_bytes(&output, &bytes)?;
+    let identity = qualification
+        .qualification()
+        .identity()
+        .map_err(|error| format!("cannot identify AIR qualification: {error}"))?;
+    eprintln!("qualification_path={}", output.display());
+    eprintln!(
+        "qualified_model={}",
+        qualification.qualification().selected_model()
+    );
+    eprintln!("qualification_sha256={identity}");
+    Ok(())
+}
+
+fn run_air_generate(arguments: &[String]) -> Result<(), String> {
+    let mut qualification_path = None;
+    let mut prompt = None;
+    let mut max_output_tokens = None;
+    let mut output = None;
+    let mut timeout_seconds = DEFAULT_TIMEOUT_SECONDS;
+    let mut index = 0;
+    while index < arguments.len() {
+        let flag = &arguments[index];
+        let value = option_value(arguments, index, flag)?;
+        match flag.as_str() {
+            "--qualification" => qualification_path = Some(PathBuf::from(value)),
+            "--prompt" => prompt = Some(value.to_owned()),
+            "--max-output-tokens" => max_output_tokens = Some(parse_positive_u32(value, flag)?),
+            "--output" => output = Some(PathBuf::from(value)),
+            "--timeout-seconds" => timeout_seconds = parse_positive_u64(value, flag)?,
+            _ => return Err(format!("unknown air-generate option '{flag}'\n{}", usage())),
+        }
+        index += 2;
+    }
+
+    let qualification_path =
+        qualification_path.ok_or_else(|| "air-generate requires --qualification".to_owned())?;
+    let prompt = prompt.ok_or_else(|| "air-generate requires --prompt".to_owned())?;
+    let max_output_tokens =
+        max_output_tokens.ok_or_else(|| "air-generate requires --max-output-tokens".to_owned())?;
+    let output = output.ok_or_else(|| "air-generate requires --output".to_owned())?;
+
+    let qualification_bytes = fs::read(&qualification_path).map_err(|error| {
+        format!(
+            "cannot read qualification '{}': {error}",
+            qualification_path.display()
+        )
+    })?;
+    let qualification = AirQualification::from_bytes(&qualification_bytes)
+        .map_err(|error| format!("invalid AIR qualification: {error}"))?;
+    let request = TextGenerateRequest::new(prompt, max_output_tokens)
+        .map_err(|error| format!("invalid text generation request: {error}"))?;
+    let client = AirClient::new(
+        qualification.qualification().endpoint(),
+        Duration::from_secs(timeout_seconds),
+    )
+    .map_err(|error| error.to_string())?;
+    let execution = client
+        .generate(&qualification, &request)
+        .map_err(|error| error.to_string())?;
+    let bytes = execution
+        .to_canonical_bytes()
+        .map_err(|error| format!("cannot serialize AIR execution: {error}"))?;
+    write_bytes(&output, &bytes)?;
+    eprintln!("execution_path={}", output.display());
+    eprintln!("model={}", execution.receipt().model());
+    println!("{}", execution.response().text());
+    Ok(())
+}
+
 fn read_environment_snapshot(path: &Path) -> Result<EnvironmentSnapshot, String> {
     let bytes = fs::read(path)
         .map_err(|error| format!("cannot read environment '{}': {error}", path.display()))?;
@@ -215,6 +325,25 @@ fn ensure_llama_endpoint_was_observed(
     if !configured {
         return Err(format!(
             "llama.cpp endpoint '{endpoint}' was not configured in the supplied environment snapshot"
+        ));
+    }
+    Ok(())
+}
+
+fn ensure_air_endpoint_was_observed(
+    snapshot: &EnvironmentSnapshot,
+    endpoint: &str,
+) -> Result<(), String> {
+    let configured = snapshot.runtimes().iter().any(|runtime| {
+        runtime.adapter().as_str() == "provider.air.http"
+            && runtime
+                .endpoint_candidates()
+                .iter()
+                .any(|candidate| candidate == endpoint)
+    });
+    if !configured {
+        return Err(format!(
+            "AIR endpoint '{endpoint}' was not configured in the supplied environment snapshot"
         ));
     }
     Ok(())
@@ -263,6 +392,10 @@ fn usage() -> String {
         "  smi-mef-cli llama-qualify --endpoint URL --environment PATH [--model ID] --output PATH ",
         "[--timeout-seconds N]\n",
         "  smi-mef-cli llama-generate --qualification PATH --prompt TEXT ",
+        "--max-output-tokens N --output PATH [--timeout-seconds N]\n",
+        "  smi-mef-cli air-qualify --endpoint URL --environment PATH [--model ID] --output PATH ",
+        "[--timeout-seconds N]\n",
+        "  smi-mef-cli air-generate --qualification PATH --prompt TEXT ",
         "--max-output-tokens N --output PATH [--timeout-seconds N]"
     )
     .to_owned()
@@ -286,6 +419,21 @@ mod tests {
     fn generation_requires_prior_qualification_path() {
         let result = run([
             "llama-generate",
+            "--prompt",
+            "hello",
+            "--max-output-tokens",
+            "8",
+            "--output",
+            "ignored.json",
+        ]
+        .map(str::to_owned)
+        .into_iter());
+        assert!(result.is_err());
+    }
+    #[test]
+    fn air_generation_requires_prior_qualification_path() {
+        let result = run([
+            "air-generate",
             "--prompt",
             "hello",
             "--max-output-tokens",

@@ -561,10 +561,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "smi-mef-air"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "smi-ir",
+ "smi-mef-core",
+]
+
+[[package]]
 name = "smi-mef-cli"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "smi-mef-air",
  "smi-mef-core",
  "smi-mef-llamacpp",
  "smi-mef-observe",

@@ -114,14 +114,42 @@ Builder `SystemGraph`, `DefinitionRegistry`, or `GraphDelta`.
 The qualification is bound to a specific `EnvironmentSnapshot` identity. A later planner
 may use that evidence, but qualification itself does not choose among providers.
 
-## R0 dependency direction after Wave 2
+## Wave 3 second-provider flow
+
+```text
+EnvironmentSnapshot SHA-256
+        │
+configured AIR endpoint
+        │
+        ├── GET /health
+        ├── GET /v1/models
+        ├── GET /model
+        ├── GET /runtime
+        └── POST /v1/completions probe
+                 │
+                 ▼
+       ProviderQualification
+                 │
+                 ▼
+       POST /v1/completions
+                 │
+                 ▼
+       TextGenerationReceipt
+```
+
+AIR-specific model/runtime evidence remains inside `smi-mef-air`. The shared core contract
+continues to describe capability qualification and execution evidence without importing AIR
+scheduler, backend, or model-format semantics.
+
+## R0 dependency direction after Wave 3
 
 ```text
 smi-ir (Builder R1)
    ↑
 smi-mef-core
    ├──→ smi-mef-observe
-   └──→ smi-mef-llamacpp
+   ├──→ smi-mef-llamacpp
+   └──→ smi-mef-air
                 ↑
           smi-mef-cli
 ```

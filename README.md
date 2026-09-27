@@ -2,8 +2,8 @@
 
 **Provider-independent local model execution built on Superior MI Builder R1.**
 
-Status: **R0 Wave 2 candidate**  
-Builder dependency: immutable `builder-r1` commit `82a5ed814a42dc9ca4e8c1540227f18d4f97e11e`  
+Status: **R0 Wave 3 candidate**
+Builder dependency: immutable `builder-r1` commit `82a5ed814a42dc9ca4e8c1540227f18d4f97e11e`
 Rust toolchain: `1.98.1`
 
 Model Execution Fabric (MEF) is the post-Builder layer that observes a machine, identifies compatible model execution providers, gathers qualification evidence, and eventually proposes an explicit provider realization through ordinary Builder `GraphDelta`.
@@ -43,8 +43,8 @@ Provider discovery and planning are derived evidence. `SystemGraph` remains stru
 | --- | --- | --- |
 | 0 | Architecture and authority freeze | COMPLETE |
 | 1 | Deterministic environment snapshot and runtime inventory | CLOSED |
-| 2 | Live llama.cpp `text.generate` provider | **CURRENT** |
-| 3 | Live AIR `text.generate` provider | planned |
+| 2 | Live llama.cpp `text.generate` provider | CLOSED / QUALIFIED |
+| 3 | Live AIR `text.generate` provider | **CURRENT** |
 | 4 | Deterministic deployment planner and Builder integration | planned |
 | 5 | Destructive R0 qualification and provider-swap proof | planned |
 
@@ -64,7 +64,7 @@ cargo run -p smi-mef-cli -- snapshot \
   --output local/environment.json
 ```
 
-The command writes canonical JSON and prints its SHA-256 identity. Endpoint entries are configured candidates only. Wave 2 is the first layer allowed to convert a configured llama.cpp endpoint into measured provider qualification evidence.
+The command writes canonical JSON and prints its SHA-256 identity. Endpoint entries are configured candidates only. Provider adapters convert configured endpoint candidates into measured qualification evidence.
 
 ## Verification
 
@@ -104,3 +104,18 @@ Successful live evidence is written under `local/wave2/` and can be packaged wit
 ```bash
 ./scripts/collect-wave2-evidence.sh
 ```
+
+
+## Wave 3 live AIR proof
+
+Wave 3 adds an independent AIR adapter for the same `text.generate@1.0.0` contract.
+AIR-specific model/runtime responses remain provider evidence and do not widen MEF core.
+
+With AIR already running on its configured endpoint:
+
+```bash
+./scripts/verify.sh
+./scripts/qualify-wave3.sh
+```
+
+Successful live evidence is written under `local/wave3/`.

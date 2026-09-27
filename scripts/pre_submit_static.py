@@ -29,6 +29,17 @@ if provider_path.is_file():
     if "temperature: 0.0" not in provider or "stream: false" not in provider:
         errors.append("Wave 2 completion request lost bounded deterministic sampling defaults")
 
+air_provider_path = ROOT / "crates/smi-mef-air/src/lib.rs"
+if air_provider_path.is_file():
+    air_provider = air_provider_path.read_text()
+    if "http://127.0.0.1:8181" not in air_provider:
+        errors.append("Wave 3 provider tests must retain the canonical loopback endpoint fixture")
+    if "temperature: 0.0" not in air_provider or "stream: false" not in air_provider:
+        errors.append("Wave 3 completion request lost bounded deterministic sampling defaults")
+    for route in ["/health", "/v1/models", "/model", "/runtime", "/v1/completions"]:
+        if route not in air_provider:
+            errors.append(f"Wave 3 AIR provider missing required route token: {route}")
+
 if errors:
     print("PRE-SUBMIT STATIC: FAIL")
     for error in errors: print(f"- {error}")

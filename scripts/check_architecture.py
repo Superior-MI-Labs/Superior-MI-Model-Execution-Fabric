@@ -7,9 +7,10 @@ required = [
     "AGENTS.md", "ARCHITECTURE.md", "docs/status/CURRENT.md",
     "docs/roadmap/R0_WAVES.md", "docs/contracts/ENVIRONMENT_SNAPSHOT_V1.md",
     "docs/contracts/TEXT_GENERATE_V1.md", "docs/contracts/LLAMACPP_PROVIDER_V1.md",
+    "docs/contracts/AIR_PROVIDER_V1.md",
     "docs/decisions/ADR-0001-authority-boundary.md", "docs/decisions/ADR-0002-builder-pin.md",
     "docs/decisions/ADR-0003-llamacpp-first-provider.md", "scripts/pre-submit.sh",
-    "scripts/qualify-wave2.sh",
+    "scripts/qualify-wave2.sh", "scripts/qualify-wave3.sh",
 ]
 errors=[]
 for rel in required:
@@ -19,7 +20,7 @@ cargo=(ROOT/"Cargo.toml").read_text()
 expected='rev = "82a5ed814a42dc9ca4e8c1540227f18d4f97e11e"'
 if expected not in cargo:
     errors.append("Builder R1 dependency is not pinned to the qualified commit")
-if any(crate not in cargo for crate in ["smi-mef-core", "smi-mef-observe", "smi-mef-llamacpp", "smi-mef-cli"]):
+if any(crate not in cargo for crate in ["smi-mef-core", "smi-mef-observe", "smi-mef-llamacpp", "smi-mef-air", "smi-mef-cli"]):
     errors.append("workspace crate set is incomplete")
 
 arch=(ROOT/"ARCHITECTURE.md").read_text()
@@ -42,6 +43,16 @@ for forbidden_authority in ["SystemGraph", "GraphDelta", "DefinitionRegistry"]:
         errors.append(f"llama.cpp provider imports/mentions Builder structural authority: {forbidden_authority}")
 if "/v1/chat/completions" in provider:
     errors.append("Wave 2 provider must not widen text.generate into chat semantics")
+
+air_provider=(ROOT/"crates/smi-mef-air/src/lib.rs").read_text()
+for required_provider_token in ["/health", "/v1/models", "/model", "/runtime", "/v1/completions", "ProviderQualification"]:
+    if required_provider_token not in air_provider:
+        errors.append(f"AIR provider missing qualification/execution token: {required_provider_token}")
+for forbidden_authority in ["SystemGraph", "GraphDelta", "DefinitionRegistry"]:
+    if forbidden_authority in air_provider:
+        errors.append(f"AIR provider imports/mentions Builder structural authority: {forbidden_authority}")
+if "/v1/chat/completions" in air_provider:
+    errors.append("Wave 3 provider must not widen text.generate into chat semantics")
 
 for script in (ROOT/"scripts").glob("*.sh"):
     if not os.access(script, os.X_OK):
