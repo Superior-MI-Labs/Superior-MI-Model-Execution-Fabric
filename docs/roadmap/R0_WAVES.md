@@ -1,39 +1,67 @@
-# R0 Waves
+# R0 Waves - Completed Historical Roadmap
 
-R0 has exactly six planned waves, numbered 0 through 5.
+> **R0 is complete. This document is a historical development record, not an active plan.**
+
+R0 used exactly six waves, numbered 0 through 5.
+
+| Wave | Goal | Final status |
+| ---: | --- | --- |
+| 0 | Architecture and authority freeze | ✅ CLOSED |
+| 1 | Environment snapshot and runtime inventory | ✅ CLOSED |
+| 2 | llama.cpp provider | ✅ QUALIFIED |
+| 3 | AIR provider and differential provider proof | ✅ QUALIFIED |
+| 4 | Deployment planner and Builder integration | ✅ QUALIFIED |
+| 5 | Destructive R0 qualification | ✅ QUALIFIED |
 
 ## Wave 0 - Architecture and Authority Freeze
 
-Freeze ownership, dependency direction, initial capability identity, evidence-vs-authority distinction, and release endpoint.
+Frozen ownership, dependency direction, initial capability identity, evidence-vs-authority distinction, and the R0 release endpoint.
 
 ## Wave 1 - Environment Snapshot and Runtime Inventory
 
-Produce deterministic read-only machine evidence. No model execution.
+Produced deterministic read-only machine evidence without model execution.
 
-Exit proof: the same observations in different insertion order serialize identically and produce the same SHA-256 identity; absent optional tools remain explicit rather than fabricated.
+Exit proof: equivalent observations serialize canonically and produce stable SHA-256 identity; absent optional tools remain explicit rather than fabricated.
 
 ## Wave 2 - llama.cpp Provider
 
-Implement the first live `text.generate@1.0.0` provider using llama.cpp's HTTP server. Require explicit health/model probing and bounded requests. Preserve provider-specific responses as evidence without leaking their schema into Builder IR.
+Implemented and live-qualified the first text.generate@1.0.0 provider using llama.cpp's HTTP server.
 
-Exit proof: a configured local llama.cpp server can be discovered, qualified for the bounded R0 contract, invoked, cancelled/timed out, and rejected cleanly when unhealthy or incompatible.
+Qualification requires explicit health/model probing, deterministic or explicit model selection, bounded generation requests, and retained evidence bound to the environment snapshot.
 
 ## Wave 3 - AIR Provider
 
-Implement the same stable capability through AIR's public HTTP surface. No AIR-specific semantic fork of `text.generate`.
+Implemented an independent AIR adapter for the same provider-independent capability contract.
 
-Exit proof: both providers satisfy the same MEF request/response contract while retaining independent runtime receipts.
+Exit proof included live AIR qualification and a differential provider test showing that the same canonical request identity could execute through llama.cpp and AIR while provider identity changed.
 
 ## Wave 4 - Deployment Planner and Builder Integration
 
-Use environment + qualification evidence to produce a deterministic provider choice under explicit policy, then express realization through ordinary Builder definitions/bindings/`GraphDelta`.
+Added deterministic evidence-bound planning under explicit provider policy.
 
-Exit proof: provider order does not affect a deterministic policy result; ambiguous/no-policy cases do not guess; Builder remains structural authority.
+The planner emits ordinary Builder GraphDelta proposals and does not become a structural authority. Candidate order cannot determine the result, and ambiguous/no-policy cases do not guess.
 
 ## Wave 5 - Destructive R0 Qualification
 
-Stop normal feature development. Attack snapshots, provider failures, malformed responses, cancellation, stale evidence, artifact mismatch, ambiguous planning, replay, and clean-room agent continuation.
+Attacked the endpoint claim rather than adding normal features.
 
-Final R0 proof:
+Qualification exercised stale environment evidence, tampered qualification evidence, provider mismatch, missing policy, unreachable providers, deterministic replay, and provider substitution.
 
-> The same high-level `text.generate@1.0.0` intent is executed through two real provider stacks by changing only explicit deployment realization. Builder's structural contract does not change, provider selection is evidence/policy driven, and missing compatibility fails structurally rather than fabricating integration code.
+## Final R0 proof
+
+> The same high-level text.generate@1.0.0 intent executes through two independently qualified real provider stacks by changing only explicit deployment realization. Builder's structural contract remains authoritative, provider selection is evidence- and policy-bound, and missing compatibility fails structurally rather than fabricating integration code.
+
+Final verdict:
+
+~~~text
+MEF R0 QUALIFIED PROVIDER SUBSTITUTION: PASS
+~~~
+
+Frozen identity:
+
+~~~text
+commit 33f63246244f91acfba5659bba80447e6e181108
+tag    mef-r0-qualified
+~~~
+
+Any future MEF roadmap should begin as a new post-R0 plan rather than silently extending this completed wave sequence.
