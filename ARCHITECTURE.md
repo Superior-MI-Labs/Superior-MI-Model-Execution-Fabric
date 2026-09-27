@@ -1,122 +1,148 @@
 # Model Execution Fabric R0 Architecture
 
-## Purpose
+> **Status: CLOSED · QUALIFIED · FROZEN**
 
-MEF connects stable Builder capability intent to concrete local execution stacks while preserving
-Builder as structural authority.
+MEF connects stable Builder capability intent to concrete local execution stacks while preserving Superior MI Builder as structural authority.
 
-## Authority map
+## R0 authority model
 
-```text
-Superior MI Builder R1
-  DefinitionRegistry   semantic/module definitions
-  SystemGraph          canonical structure
-  GraphDelta           only structural mutation path
-        │
-        ▼
-Model Execution Fabric
-  EnvironmentSnapshot  immutable observation evidence
-  Provider Adapters    runtime-specific qualification/execution
-  Deployment Planner   deterministic evidence/policy proposal
-        │
-        ▼
-External runtimes
-  llama.cpp / AIR / later stacks
-```
+~~~mermaid
+flowchart TD
+    Builder["Superior MI Builder R1<br/>DefinitionRegistry · SystemGraph · GraphDelta"]
+    MEF["Model Execution Fabric R0"]
+    Observe["EnvironmentSnapshot"]
+    Qualify["ProviderQualification"]
+    Plan["DeploymentPolicy + DeploymentPlan"]
+    Llama["llama.cpp"]
+    AIR["AIR"]
+    Evidence["Execution receipts / evidence"]
 
-MEF must never become a second graph, registry, scheduler, model server, or capability authority.
+    Builder -->|"capability intent + structural target"| MEF
+    Observe --> MEF
+    Qualify --> MEF
+    MEF --> Plan
+    Plan -->|"explicit realization"| Llama
+    Plan -->|"explicit realization"| AIR
+    Llama --> Evidence
+    AIR --> Evidence
+    MEF -.->|"GraphDelta proposal only"| Builder
+~~~
 
-## Stable capability identity
+### Authority rules
 
-MEF reuses Builder's `CapabilityRef`. R0 qualifies:
+- Builder owns semantic definitions, canonical SystemGraph, validation, and the structural mutation path.
+- EnvironmentSnapshot is immutable observation evidence, never structural truth.
+- Provider adapters translate, qualify, and execute provider-local protocols.
+- ProviderQualification is evidence, not a provider registry.
+- DeploymentPolicy makes provider preference explicit.
+- DeploymentPlan is a deterministic proposal, not committed state.
+- execute-plan follows an already explicit plan and performs no fallback selection.
+- MEF never becomes a second graph, registry, scheduler, model server, or capability authority.
 
-```text
+## Stable capability
+
+R0 qualifies one provider-independent capability:
+
+~~~text
 text.generate@1.0.0
-```
+~~~
 
-The semantic capability does not encode llama.cpp, AIR, CUDA, GGUF, endpoint, or model-path details.
-
-## Observation authority
-
-`EnvironmentSnapshot` is deterministic read-only evidence. It may describe observed hardware,
-runtime candidates, and model roots, but it is not System IR and cannot mutate Builder state.
+The capability identity does not encode runtime, endpoint, model path, CUDA backend, GGUF format, or provider-specific model names.
 
 ## Provider boundary
 
-Provider adapters independently qualify a concrete runtime/model/environment combination for a stable
-capability and retain provider-specific evidence.
+~~~mermaid
+flowchart LR
+    Core["smi-mef-core<br/>shared request / response / qualification / receipt"]
+    L["smi-mef-llamacpp"]
+    A["smi-mef-air"]
+    LP["llama.cpp HTTP"]
+    AP["AIR HTTP"]
 
-```text
-smi-mef-core
-  ProviderQualification
-  TextGenerateRequest
-  TextGenerateResponse
-  TextGenerationReceipt
-        ▲
-   ┌────┴────┐
-   │         │
-smi-mef-llamacpp   smi-mef-air
-```
+    Core --> L --> LP
+    Core --> A --> AP
+~~~
 
-Provider-local model identity remains provider-local in R0. Cross-provider model artifact equivalence
-is not fabricated from names or paths.
+Provider-local model identity remains provider-local in R0. Cross-provider artifact equivalence is not inferred from paths or display names.
 
-## Deployment planning
+## Observation and qualification
 
-`smi-mef-plan` consumes current environment evidence plus independently validated provider
-qualifications under an explicit `DeploymentPolicy`.
+~~~text
+read-only machine observation
+        ↓
+EnvironmentSnapshot
+        ↓
+provider-specific probing
+        ↓
+ProviderQualification
+        ↓
+retained evidence + digest
+~~~
 
-```text
+Qualification is bound to the exact environment snapshot used to establish it. Stale or tampered evidence is rejected.
+
+## Deterministic planning
+
+smi-mef-plan consumes:
+
+~~~text
 EnvironmentSnapshot
       +
 ProviderQualification[]
       +
-explicit provider policy
+explicit DeploymentPolicy
       +
 Builder-owned realization target
-      │
-      ▼
+      ↓
 DeploymentPlan
-      ├── selected qualification identity
-      ├── provider / endpoint / model evidence
-      └── ordinary Builder GraphDelta proposal
-```
+~~~
 
-The planner is stateless. It does not apply `GraphDelta`, mutate `SystemGraph`, or register semantic
-definitions. Missing, stale, capability-incompatible, or ambiguous evidence is a structured failure.
-Candidate iteration order cannot decide the plan.
+A plan records the chosen provider, endpoint, model identity, qualification identity, environment identity, and Builder realization proposal.
 
-## Planned execution
-
-`execute-plan` is not a second planner. It follows an already explicit plan, revalidates the exact
-provider-specific qualification selected by that plan, and delegates to the existing provider adapter.
-
-```text
-DeploymentPlan + exact qualification + TextGenerateRequest
-        │
-        ├── provider.llamacpp.http -> existing llama.cpp adapter
-        └── provider.air.http      -> existing AIR adapter
-```
-
-No fallback occurs inside execution. A mismatched qualification is rejected.
+Planning is deterministic with respect to canonical inputs. Candidate iteration order cannot choose a provider. Missing or ambiguous policy fails structurally.
 
 ## Builder realization
 
-The planner proposes only ordinary Builder binding mutations:
+MEF proposes only ordinary Builder mutations.
 
-```text
-unbound -> BindCapability
-bound A -> UnbindCapability(A) + BindCapability(B)
-bound B -> no structural mutation required
-```
+~~~text
+unbound
+  -> BindCapability
 
-Every mutation proposal is bound to an exact `GraphRevision`. Builder remains responsible for
-application, validation, and commit. The R0 test suite applies a planner-generated substitution delta
-through Builder's own `GraphDelta::apply` path to prove this boundary is real.
+bound to A, target B
+  -> UnbindCapability(A)
+  -> BindCapability(B)
 
-## R0 dependency direction
+already bound to target
+  -> no structural mutation
+~~~
 
-```text
+Every proposed mutation is bound to an exact GraphRevision. Builder remains responsible for validation and application through GraphDelta::apply.
+
+## Planned execution
+
+~~~mermaid
+flowchart TD
+    Request["TextGenerateRequest"]
+    Plan["DeploymentPlan"]
+    Qualification["exact selected qualification"]
+    Dispatch["execute-plan"]
+    L["existing llama.cpp adapter"]
+    A["existing AIR adapter"]
+    Receipt["TextGenerationReceipt"]
+
+    Request --> Dispatch
+    Plan --> Dispatch
+    Qualification --> Dispatch
+    Dispatch --> L --> Receipt
+    Dispatch --> A --> Receipt
+~~~
+
+A qualification that does not exactly match the plan is rejected. No implicit fallback occurs.
+
+## Dependency direction
+
+~~~text
 smi-ir (Builder R1)
    ↑
 smi-mef-core
@@ -126,15 +152,25 @@ smi-mef-core
    └── smi-mef-plan
             ↑
        smi-mef-cli
-```
+~~~
 
 Builder imports no MEF crate.
 
-## R0 endpoint
+## Qualified provider substitution
 
-The release claim is **Qualified Provider Substitution**:
+R0 established:
 
-> The same high-level `text.generate@1.0.0` intent executes through two independently qualified real
-> provider stacks while only explicit deployment realization changes. Selection is evidence- and
-> policy-bound, Builder remains structural authority, and missing compatibility fails rather than
-> generating hidden integration glue.
+> The same canonical text.generate@1.0.0 request identity executes through independently qualified llama.cpp and AIR provider stacks while only explicit deployment realization changes.
+
+The destructive qualification also demonstrated fail-closed behavior for missing policy, stale environment evidence, tampered qualification evidence, cross-provider qualification substitution, and unreachable configured providers.
+
+## Frozen boundary
+
+The immutable qualified source is tagged:
+
+~~~text
+mef-r0-qualified
+commit 33f63246244f91acfba5659bba80447e6e181108
+~~~
+
+Public documentation may evolve on main. The qualified tag must not move.
