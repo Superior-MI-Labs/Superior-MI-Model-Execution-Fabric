@@ -1,5 +1,6 @@
-5eb7dd2a0adde26277ed3c499453f44371ee81f93b31c6ccf450e2a9a8ee0c6c  ./AGENTS.md
-d30cbd410cdf01b24c5812ebe83b5018b1ee21ef3cad1006e0813af25131e89f  ./ARCHITECTURE.md
+09007d72b46ca0ea19b565b7a172616360739f84a09cfa7b36d58a1c3130aceb  ./.gitignore
+31a3901445201baca8d55218934bf53bf71a3319ea289e811df0334fa34a4701  ./AGENTS.md
+75d98e228df190aed4d7c9d52805620e38a05565f73483e70bfaa7a4b1cd3710  ./ARCHITECTURE.md
 efe283b6f7ee88712560616e28c3633fccbb3cff91d1d99457fc39b5afa8555c  ./Cargo.lock
 aa9be8230653b1e846c71d1015041cec770ff19e7569c77d6310dd5efcde78d7  ./Cargo.toml
 ede0dfa5d130b936943f55dccb913265e09ca3b2f1ae33cda36a314c4cf42190  ./crates/smi-mef-air/Cargo.toml
@@ -26,8 +27,8 @@ ccd8b70784a4c28612508fcd84ed29a51a3b3531c56267704cbb0a7fd2e0ac54  ./docs/decisio
 9dc43120c24472a448b2a9eb644fe807b44e6db0eac6643ce58d56a134e26957  ./docs/decisions/ADR-0002-builder-pin.md
 1c5946aeeb494734aef928ef6f9ff66d4b1bc88966996f23cfdb421566f0a52c  ./docs/decisions/ADR-0003-llamacpp-first-provider.md
 d50f6367f8337b67a99067bd40af7de90a3e3fcc5c2b8bf231ca86a89eb171ee  ./docs/decisions/ADR-0004-explicit-evidence-bound-planning.md
-67c92c7c00a430d6a069dca57a5fec493ba0314929a4f4414a51e0b09d9d68f3  ./docs/roadmap/R0_WAVES.md
-d01f51023c7a7a81689e3ecba2fe18494bfdf81c1f6228aa27292d33a47f1309  ./docs/status/CURRENT.md
+89654d9df2b32073f5b8940b082ee1d41acdcb36c4481206d8220f81a8c54e3e  ./docs/roadmap/R0_WAVES.md
+f7fdb4d388ea75b18ec92ce5f6a0d28d3818b021a80593a05740357f15ba4948  ./docs/status/CURRENT.md
 35887f583e6814a35a2d93ac850f44de1a03dfd69b6966c5f5a58350a7d03b93  ./docs/verification/R0-ENDPOINT-PLAN.md
 7778294f933ac00de7e2f57a7e72d15fe18d9560714496d416eee3e2256227da  ./docs/verification/VERIFICATION.md
 1d8d79e1d437d3560a93c3d74d1c3a6319dd5ba0a1e2971931c1e0020474525f  ./docs/verification/WAVE-1-FAILURE-001.md
@@ -38,9 +39,9 @@ aef4d91b130a1d7c7ca4b4652238e3b8ec40f2c2b32525513be558fe4d63efcf  ./docs/verific
 02b3a3207de08303cfdecbe3fe1bf7aef096a3dfda78e106041ba4043d8f5144  ./docs/verification/WAVE-2-PLAN.md
 b3711ed10ea68b5d6bb2fd7852fef5acd4c142ac2183fc7d862455147b7ea026  ./docs/verification/WAVE-3-BASELINE.txt
 e90919e3ce391cb8ab82e2e785b2d2cc2a38ee5c61a74402087ea2cd9f2e14c6  ./docs/verification/WAVE-3-PLAN.md
-09007d72b46ca0ea19b565b7a172616360739f84a09cfa7b36d58a1c3130aceb  ./.gitignore
 88ce1f10b4e5f66e91632c0cc9ce589735087e7c6898fd9592f3d179ad6e089d  ./LICENSE
-4245d4e4be4a23c75af731fc802c143fe49caadc3b1c514b567ad8a6fb964e14  ./README.md
+2200146f2753b8ace9febda9bdecbe7d31cd74e7532d94856816ae30d6fde73b  ./README.md
+cd7907ae13fc4485325abeb4d984a4f150e7ebe8ac78df0c6764d5770dc3562f  ./RELEASE_NOTES_R0.md
 7553618f800829444096beea3dce84c3d07585efda504c19adb6787369bbd9e8  ./rust-toolchain.toml
 aa07529983d4455b310cbc7675ac88e84f67771fc6a4ad4c22d101a1b77ea54d  ./scripts/bootstrap-check.sh
 a8a3ccc9b10eca1b12caee317218c678cb884a9b3daec3f980960232bca822fd  ./scripts/check_architecture.py
@@ -49,8 +50,8 @@ a8a3ccc9b10eca1b12caee317218c678cb884a9b3daec3f980960232bca822fd  ./scripts/chec
 0cec2ea04a29949a696460b302a962110ca56b0ef3ffadd9fd0801dca112c033  ./scripts/collect-wave2-evidence.sh
 aa54793110c572c906ec8ff04cb502e0c9bf98f1b30b229ece703f20a733097f  ./scripts/collect-wave3-evidence.sh
 0c8cfaad9ed2857b3b730874362c5bc35f05b3a98f890d1cd5da2b4e410aaf01  ./scripts/package-candidate.sh
-0d32176a41601bfae942335d7cb6424e3253ef250fe4ed7c06f53d02bcd9e954  ./scripts/pre-submit.sh
 19e1134f5fc2ccaadec3930ae0e7e6a3898e34a52901907da18654c6c1149e92  ./scripts/pre_submit_static.py
+0d32176a41601bfae942335d7cb6424e3253ef250fe4ed7c06f53d02bcd9e954  ./scripts/pre-submit.sh
 f6d20968c3a2753dcfd0b9d1172d33c553a406061fa40caf0fd49f6706124d85  ./scripts/qualify-r0.sh
 018dfc8bd8deca7b53904aca2c38bd4d20929e947810acc398edf364d89e8be5  ./scripts/qualify-wave2.sh
 9029081fc4b92a6f9a7fbf747d597ae4d55f82ec425e5e948d046404852d277c  ./scripts/qualify-wave3.sh
