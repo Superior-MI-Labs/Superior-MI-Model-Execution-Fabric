@@ -1,0 +1,14 @@
+[package]
+name = "smi-mef-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+smi-mef-core = { path = "../smi-mef-core" }
+smi-mef-observe = { path = "../smi-mef-observe" }
+smi-mef-llamacpp = { path = "../smi-mef-llamacpp" }
+serde_json.workspace = true
+
+[lints]
+workspace = true

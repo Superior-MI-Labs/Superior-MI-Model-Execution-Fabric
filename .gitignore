@@ -1,0 +1,10 @@
+/target/
+*.pyc
+__pycache__/
+*.rej
+*.orig
+failure-evidence/
+local/
+
+# Generated qualification/evidence archives
+/Superior-MI-MEF-*.zip

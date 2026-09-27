@@ -1,0 +1,12 @@
+[package]
+name = "smi-mef-observe"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+smi-ir.workspace = true
+smi-mef-core = { path = "../smi-mef-core" }
+
+[lints]
+workspace = true
